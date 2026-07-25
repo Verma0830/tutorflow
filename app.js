@@ -429,10 +429,16 @@ function setupEventListeners() {
             updateSyncUI();
             
             if (url) {
-                showToast("Sync URL saved! Initializing cloud database...", "info");
-                // Upload current local state to cloud so she doesn't lose anything
-                await syncToCloud("sync_all", { students: state.students, attendance: state.attendance, fees: state.fees });
-                showToast("Cloud sync successfully set up and active!", "success");
+                showToast("Connecting to Google Sheets...", "info");
+                // Try to load existing data from cloud first to prevent overwriting it!
+                const loaded = await fetchFromCloud();
+                if (loaded) {
+                    showToast("Connected! Loaded existing data from Google Sheets.", "success");
+                } else {
+                    // If cloud is empty or failed to load, initialize cloud with our local data
+                    await syncToCloud("sync_all", { students: state.students, attendance: state.attendance, fees: state.fees });
+                    showToast("Connected! Initialized Google Sheets with your local data.", "success");
+                }
             } else {
                 showToast("Cloud Sync disabled. Switching to local storage.", "info");
             }
@@ -1558,23 +1564,29 @@ async function flushSyncAll() {
     
     try {
         console.log("Triggering debounced full cloud sync...");
-        await fetch(syncUrl, {
+        const response = await fetch(syncUrl, {
             method: "POST",
-            mode: "no-cors",
             headers: {
                 "Content-Type": "text/plain"
             },
             body: pending
         });
         
-        // Success: clear pending sync_all
-        localStorage.removeItem("tutorflow_pending_sync_all");
-        console.log("Full cloud sync completed!");
-        
-        if (elements.syncStatusText) {
-            elements.syncStatusText.textContent = "Cloud Sync: Enabled (Auto-syncing changes)";
-            elements.syncStatusText.style.color = "var(--success)";
+        if (response.ok) {
+            const result = await response.json();
+            if (result && result.success) {
+                // Success: clear pending sync_all
+                localStorage.removeItem("tutorflow_pending_sync_all");
+                console.log("Full cloud sync completed successfully!");
+                
+                if (elements.syncStatusText) {
+                    elements.syncStatusText.textContent = "Cloud Sync: Enabled (Auto-syncing changes)";
+                    elements.syncStatusText.style.color = "var(--success)";
+                }
+                return;
+            }
         }
+        throw new Error("Server returned unsuccessful status for full sync");
     } catch (err) {
         console.error("Failed to perform full cloud sync", err);
         if (elements.syncStatusText) {
@@ -1632,15 +1644,21 @@ async function flushSyncQueue() {
     for (let i = 0; i < queue.length; i++) {
         const item = queue[i];
         try {
-            await fetch(syncUrl, {
+            const response = await fetch(syncUrl, {
                 method: "POST",
-                mode: "no-cors",
                 headers: {
                     "Content-Type": "text/plain"
                 },
                 body: JSON.stringify(item)
             });
-            successCount++;
+            if (response.ok) {
+                const res = await response.json();
+                if (res && res.success) {
+                    successCount++;
+                    continue;
+                }
+            }
+            throw new Error("Item sync returned unsuccessful");
         } catch (err) {
             console.error("Failed to sync item", item, err);
             break;
