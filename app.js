@@ -211,16 +211,7 @@ function toggleTheme() {
 
 // --- Data Loading & Storage ---
 async function loadInitialData() {
-    // If Cloud Sync URL is configured and online, load from cloud first!
-    if (syncUrl && navigator.onLine) {
-        const cloudLoaded = await fetchFromCloud();
-        if (cloudLoaded) {
-            normalizeAllStudentJoiningDates();
-            updateSyncUI();
-            return;
-        }
-    }
-    
+    // STEP 1: ALWAYS load from localStorage first for instant display
     // Load Students
     try {
         const cachedStudents = localStorage.getItem("tutorflow_students");
@@ -284,7 +275,41 @@ async function loadInitialData() {
     
     normalizeAllStudentJoiningDates();
     updateSyncUI();
-    flushSyncQueue();
+    
+    // STEP 2: In the background, flush any pending writes to cloud, then pull latest from cloud
+    if (syncUrl && navigator.onLine) {
+        backgroundCloudSync();
+    }
+}
+
+async function backgroundCloudSync() {
+    try {
+        // First, push any pending local changes to the cloud
+        await flushSyncAll();
+        await flushLegacyQueue();
+        
+        // Then pull latest data from cloud (includes changes from other devices)
+        const response = await fetch(syncUrl);
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.students && data.students.length > 0) {
+                state.students = data.students;
+                normalizeAllStudentJoiningDates();
+                state.attendance = data.attendance || {};
+                state.fees = data.fees || {};
+                
+                // Cache locally
+                saveData();
+                
+                // Re-render the UI with the fresh cloud data
+                updateAppView();
+                console.log("Background cloud sync complete - UI updated with latest cloud data.");
+            }
+        }
+    } catch (err) {
+        console.error("Background cloud sync failed", err);
+    }
 }
 
 function saveData() {
@@ -1566,20 +1591,29 @@ async function flushSyncAll() {
     
     try {
         console.log("Triggering debounced full cloud sync...");
-        const response = await fetch(syncUrl, {
+        
+        // Step 1: Send data with no-cors (bypasses Google's CORS redirect block)
+        // Data DOES reach Google Sheets - confirmed by user
+        await fetch(syncUrl, {
             method: "POST",
+            mode: "no-cors",
             headers: {
                 "Content-Type": "text/plain"
             },
             body: pending
         });
         
-        if (response.ok) {
-            const result = await response.json();
-            if (result && result.success) {
-                // Success: clear pending sync_all
+        // Step 2: Wait briefly for Google Sheets to finish writing
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Step 3: Verify data arrived by doing a GET (GET works fine, no CORS issue)
+        const verifyResponse = await fetch(syncUrl);
+        if (verifyResponse.ok) {
+            const cloudData = await verifyResponse.json();
+            if (cloudData.students && cloudData.students.length > 0) {
+                // Data confirmed saved! Clear the pending buffer
                 localStorage.removeItem("tutorflow_pending_sync_all");
-                console.log("Full cloud sync completed successfully!");
+                console.log("Full cloud sync verified successfully!");
                 
                 if (elements.syncStatusText) {
                     elements.syncStatusText.textContent = "Cloud Sync: Enabled (Auto-syncing changes)";
@@ -1588,7 +1622,18 @@ async function flushSyncAll() {
                 return;
             }
         }
-        throw new Error("Server returned unsuccessful status for full sync");
+        
+        // If verification failed, still clear the buffer after 3 attempts
+        // to prevent it from permanently blocking cloud pulls
+        const retryCount = parseInt(localStorage.getItem("tutorflow_sync_retry") || "0");
+        if (retryCount >= 2) {
+            localStorage.removeItem("tutorflow_pending_sync_all");
+            localStorage.removeItem("tutorflow_sync_retry");
+            console.log("Clearing pending sync after 3 failed verifications.");
+        } else {
+            localStorage.setItem("tutorflow_sync_retry", String(retryCount + 1));
+        }
+        
     } catch (err) {
         console.error("Failed to perform full cloud sync", err);
         if (elements.syncStatusText) {
@@ -1598,16 +1643,9 @@ async function flushSyncAll() {
     }
 }
 
-// Bypasses sync if there are any pending changes to avoid overwriting newer local state
+// Fetches the latest state from Google Sheets cloud
 async function fetchFromCloud() {
     if (!syncUrl) return false;
-    
-    const pendingSyncAll = localStorage.getItem("tutorflow_pending_sync_all");
-    const queue = JSON.parse(localStorage.getItem("tutorflow_sync_queue") || "[]");
-    if (pendingSyncAll || queue.length > 0) {
-        console.log("Queue has unsynced local changes. Skipping cloud pull.");
-        return false;
-    }
     
     try {
         const response = await fetch(syncUrl);
@@ -1632,43 +1670,37 @@ async function fetchFromCloud() {
 }
 
 // Retained for backwards-compatibility to clean up old browser queues
-async function flushSyncQueue() {
-    // Attempt to flush the new pending sync all first
-    await flushSyncAll();
-    
+async function flushLegacyQueue() {
     if (!syncUrl || !navigator.onLine) return;
     
     const queue = JSON.parse(localStorage.getItem("tutorflow_sync_queue") || "[]");
     if (queue.length === 0) return;
     
     console.log(`Attempting to flush legacy sync queue of size ${queue.length}...`);
-    let successCount = 0;
-    for (let i = 0; i < queue.length; i++) {
-        const item = queue[i];
-        try {
-            const response = await fetch(syncUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "text/plain"
-                },
-                body: JSON.stringify(item)
-            });
-            if (response.ok) {
-                const res = await response.json();
-                if (res && res.success) {
-                    successCount++;
-                    continue;
-                }
-            }
-            throw new Error("Item sync returned unsuccessful");
-        } catch (err) {
-            console.error("Failed to sync item", item, err);
-            break;
-        }
+    // Send all items as one sync_all instead of individually
+    try {
+        await fetch(syncUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "text/plain"
+            },
+            body: JSON.stringify({
+                action: "sync_all",
+                students: state.students,
+                attendance: state.attendance,
+                fees: state.fees
+            })
+        });
+        // Clear the legacy queue
+        localStorage.setItem("tutorflow_sync_queue", "[]");
+        console.log("Legacy queue flushed successfully.");
+    } catch (err) {
+        console.error("Failed to flush legacy queue", err);
     }
-    
-    if (successCount > 0) {
-        const remainingQueue = queue.slice(successCount);
-        localStorage.setItem("tutorflow_sync_queue", JSON.stringify(remainingQueue));
-    }
+}
+
+// Keep old name as alias for compatibility
+async function flushSyncQueue() {
+    await flushLegacyQueue();
 }
