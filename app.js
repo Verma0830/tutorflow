@@ -141,7 +141,7 @@ function initDates() {
                 const allOff = statuses.every(s => s === "off");
                 
                 // At least one active student had tuition
-                const hasOn = statuses.some(s => s === "present" || s === "absent" || s === "late");
+                const hasOn = statuses.some(s => s === "present" || s === "absent");
                 
                 if (allOff) {
                     dayElem.classList.add("fp-day-tuition-off");
@@ -586,23 +586,20 @@ function updateDashboardStats() {
     const todayRecords = state.attendance[state.currentDate] || {};
     let presentCount = 0;
     let absentCount = 0;
-    let lateCount = 0;
     let offCount = 0;
     
     state.students.forEach(student => {
         const status = todayRecords[student.id];
         if (status === "present") presentCount++;
-        else if (status === "late") lateCount++;
         else if (status === "absent") absentCount++;
         else if (status === "off") offCount++;
     });
     
-    const totalPresent = presentCount + lateCount;
-    elements.statPresentToday.textContent = totalPresent;
+    elements.statPresentToday.textContent = presentCount;
     elements.statAbsentToday.textContent = absentCount;
     
     const activeTotal = total - offCount;
-    const presentPct = activeTotal > 0 ? Math.round((totalPresent / activeTotal) * 100) : 0;
+    const presentPct = activeTotal > 0 ? Math.round((presentCount / activeTotal) * 100) : 0;
     
     let subtext = `${presentPct}% attendance`;
     if (offCount > 0) {
@@ -639,7 +636,7 @@ function renderClassSummary() {
         
         const todayRecords = state.attendance[state.currentDate] || {};
         const status = todayRecords[s.id];
-        if (status === "present" || status === "late") {
+        if (status === "present") {
             classes[s.class].present++;
         } else if (status === "off") {
             classes[s.class].off++;
@@ -708,7 +705,7 @@ function renderAttendanceChart() {
             const status = records[s.id];
             if (status !== "off") {
                 activeTotal++;
-                if (status === "present" || status === "late") {
+                if (status === "present") {
                     present++;
                 }
             }
@@ -831,9 +828,6 @@ function renderAttendanceList() {
                     </button>
                     <button class="status-btn ${status === 'absent' ? 'active' : ''}" data-status="absent" data-id="${student.id}">
                         <span class="material-symbols-rounded">cancel</span>Absent
-                    </button>
-                    <button class="status-btn ${status === 'late' ? 'active' : ''}" data-status="late" data-id="${student.id}">
-                        <span class="material-symbols-rounded">schedule</span>Late
                     </button>
                     <button class="status-btn ${status === 'off' ? 'active' : ''}" data-status="off" data-id="${student.id}">
                         <span class="material-symbols-rounded">toggle_off</span>Tuition Off
