@@ -215,6 +215,7 @@ async function loadInitialData() {
     if (syncUrl && navigator.onLine) {
         const cloudLoaded = await fetchFromCloud();
         if (cloudLoaded) {
+            normalizeAllStudentJoiningDates();
             updateSyncUI();
             return;
         }
@@ -281,6 +282,7 @@ async function loadInitialData() {
         state.fees = {};
     }
     
+    normalizeAllStudentJoiningDates();
     updateSyncUI();
 }
 
@@ -477,7 +479,46 @@ function checkAndDefaultSunday() {
             state.attendance[state.currentDate][student.id] = "off";
         });
         saveData();
-        showToast("Sunday detected: Defaulted to Tuition Holiday. You can override status below.", "info");
+    }
+}
+
+// --- Date Normalization Helpers ---
+function normalizeDateToYYYYMMDD(dateStr) {
+    if (!dateStr) return "";
+    dateStr = String(dateStr).trim();
+    
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+    }
+    
+    // Handle DD-MM-YYYY or DD/MM/YYYY
+    const ddmmyyyyMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+    if (ddmmyyyyMatch) {
+        const day = ddmmyyyyMatch[1].padStart(2, '0');
+        const month = ddmmyyyyMatch[2].padStart(2, '0');
+        const year = ddmmyyyyMatch[3];
+        return `${year}-${month}-${day}`;
+    }
+    
+    // Try browser Date parse
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+    
+    return dateStr;
+}
+
+function normalizeAllStudentJoiningDates() {
+    if (state.students && state.students.length > 0) {
+        state.students.forEach(s => {
+            if (s.joiningDate) {
+                s.joiningDate = normalizeDateToYYYYMMDD(s.joiningDate);
+            }
+        });
     }
 }
 
@@ -1185,7 +1226,7 @@ function handleStudentFormSubmit(e) {
     const name = elements.studentNameInput.value.trim();
     const cls = elements.studentClassInput.value.trim();
     const fees = parseFloat(elements.studentFeesInput.value);
-    const joiningDate = elements.studentJoiningDateInput.value;
+    const joiningDate = normalizeDateToYYYYMMDD(elements.studentJoiningDateInput.value);
     
     if (editId) {
         // Update Student
@@ -1510,6 +1551,7 @@ async function fetchFromCloud() {
             
             if (data.students && data.students.length > 0) {
                 state.students = data.students;
+                normalizeAllStudentJoiningDates();
                 state.attendance = data.attendance || {};
                 state.fees = data.fees || {};
                 
