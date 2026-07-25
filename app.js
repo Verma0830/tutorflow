@@ -274,6 +274,7 @@ async function loadInitialData() {
     }
     
     normalizeAllStudentJoiningDates();
+    normalizeAttendanceDateKeys();
     updateSyncUI();
     
     // STEP 2: In the background, flush any pending writes to cloud, then pull latest from cloud
@@ -285,7 +286,6 @@ async function loadInitialData() {
 async function backgroundCloudSync() {
     try {
         // Clear any stale sync buffers from previous broken versions
-        // This prevents old cached data from overwriting fresh cloud data
         localStorage.removeItem("tutorflow_pending_sync_all");
         localStorage.removeItem("tutorflow_sync_retry");
         localStorage.setItem("tutorflow_sync_queue", "[]");
@@ -296,22 +296,26 @@ async function backgroundCloudSync() {
             const data = await response.json();
             
             if (data.students && data.students.length > 0) {
-                // Merge: use cloud data as the base
+                // Use cloud students as base, normalize joining dates
                 state.students = data.students;
                 normalizeAllStudentJoiningDates();
                 
-                // For attendance: merge local + cloud (keep both, local wins on conflicts)
-                const cloudAttendance = data.attendance || {};
+                // Normalize LOCAL attendance keys first (e.g. "Mon Jul 06" → "2026-07-06")
+                normalizeAttendanceDateKeys();
                 const localAttendance = { ...state.attendance };
-                const mergedAttendance = { ...cloudAttendance };
                 
-                // Layer local attendance on top of cloud (local changes that haven't synced yet win)
+                // Load cloud attendance and normalize its keys too
+                state.attendance = data.attendance || {};
+                normalizeAttendanceDateKeys();
+                const cloudAttendance = { ...state.attendance };
+                
+                // Merge: cloud as base, local wins on conflicts
+                const mergedAttendance = { ...cloudAttendance };
                 for (const dateKey in localAttendance) {
                     if (!mergedAttendance[dateKey]) {
                         mergedAttendance[dateKey] = {};
                     }
                     for (const studentId in localAttendance[dateKey]) {
-                        // Local change wins over cloud
                         mergedAttendance[dateKey][studentId] = localAttendance[dateKey][studentId];
                     }
                 }
@@ -322,7 +326,7 @@ async function backgroundCloudSync() {
                 // Cache merged data locally
                 saveData();
                 
-                // Push the merged data back to cloud so all devices have the same state
+                // Push the NORMALIZED merged data back to cloud
                 await fetch(syncUrl, {
                     method: "POST",
                     mode: "no-cors",
@@ -619,6 +623,32 @@ function normalizeAllStudentJoiningDates() {
             }
         });
     }
+}
+
+// Normalizes all attendance object keys from "Mon Jul 06" → "2026-07-06"
+function normalizeAttendanceDateKeys() {
+    const raw = state.attendance;
+    if (!raw || typeof raw !== "object") return;
+    
+    const normalized = {};
+    for (const dateKey in raw) {
+        const fixedKey = normalizeDateToYYYYMMDD(dateKey);
+        if (fixedKey && fixedKey !== dateKey) {
+            // Merge: if the normalized key already exists, merge records
+            if (normalized[fixedKey]) {
+                Object.assign(normalized[fixedKey], raw[dateKey]);
+            } else {
+                normalized[fixedKey] = raw[dateKey];
+            }
+        } else {
+            if (normalized[dateKey]) {
+                Object.assign(normalized[dateKey], raw[dateKey]);
+            } else {
+                normalized[dateKey] = raw[dateKey];
+            }
+        }
+    }
+    state.attendance = normalized;
 }
 
 // --- Global View Update Orchestrator ---

@@ -234,12 +234,48 @@ function formatDate(dateObj) {
   }
   
   var dateStr = String(dateObj).trim();
+  
+  // Already in YYYY-MM-DD format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+  
   // Check if string contains standard timestamp format
   if (dateStr.indexOf("T") !== -1) {
     return dateStr.substring(0, 10);
   }
   
-  // Parse date string
+  // Handle "Mon Jul 06" or "Jul 06" (text dates without year - default to current year)
+  var monthMap = {
+    jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
+    jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12"
+  };
+  
+  // Match "Mon Jul 06" or "Mon Jul 6" or "Jul 06"
+  var textMatch = dateStr.match(/(?:[A-Za-z]+\s+)?([A-Za-z]{3})\s+(\d{1,2})$/);
+  if (textMatch) {
+    var monthName = textMatch[1].toLowerCase();
+    var day = textMatch[2].padStart(2, '0');
+    var monthNum = monthMap[monthName];
+    if (monthNum) {
+      var year = new Date().getFullYear();
+      return year + "-" + monthNum + "-" + day;
+    }
+  }
+  
+  // Match "Mon Jul 06 2026" or "Jul 06 2026"
+  var textYearMatch = dateStr.match(/(?:[A-Za-z]+\s+)?([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})$/);
+  if (textYearMatch) {
+    var monthName = textYearMatch[1].toLowerCase();
+    var day = textYearMatch[2].padStart(2, '0');
+    var year = textYearMatch[3];
+    var monthNum = monthMap[monthName];
+    if (monthNum) {
+      return year + "-" + monthNum + "-" + day;
+    }
+  }
+  
+  // Parse date string as final fallback
   var d = new Date(dateStr);
   if (!isNaN(d.getTime())) {
     var yyyy = d.getFullYear();
