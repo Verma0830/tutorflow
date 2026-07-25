@@ -500,7 +500,36 @@ function normalizeDateToYYYYMMDD(dateStr) {
         return `${year}-${month}-${day}`;
     }
     
-    // Try browser Date parse
+    const monthMap = {
+        jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
+        jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12"
+    };
+    
+    // Handle "Mon Jul 13 2026" or "Jul 13 2026"
+    const textDateYearMatch = dateStr.match(/^(?:([a-zA-Z]+)\s+)?([a-zA-Z]{3})\s+(\d{1,2})\s+(\d{4})$/);
+    if (textDateYearMatch) {
+        const monthName = textDateYearMatch[2].toLowerCase();
+        const day = textDateYearMatch[3].padStart(2, '0');
+        const year = textDateYearMatch[4];
+        const monthNum = monthMap[monthName];
+        if (monthNum) {
+            return `${year}-${monthNum}-${day}`;
+        }
+    }
+    
+    // Handle "Mon Jul 13" or "Jul 13" (default to current year)
+    const textDateMatch = dateStr.match(/^(?:([a-zA-Z]+)\s+)?([a-zA-Z]{3})\s+(\d{1,2})$/);
+    if (textDateMatch) {
+        const monthName = textDateMatch[2].toLowerCase();
+        const day = textDateMatch[3].padStart(2, '0');
+        const monthNum = monthMap[monthName];
+        if (monthNum) {
+            const year = state.currentDate ? state.currentDate.substring(0, 4) : "2026";
+            return `${year}-${monthNum}-${day}`;
+        }
+    }
+    
+    // Try browser Date parse as a final fallback
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) {
         const yyyy = d.getFullYear();
