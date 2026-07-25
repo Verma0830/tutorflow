@@ -894,7 +894,7 @@ body {
 /* Sync/Settings Page Styles */
 .sync-panel {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 24px;
     margin-bottom: 40px;
 }
@@ -930,6 +930,7 @@ body {
 
 .sync-icon.blue { background-color: var(--info-light); color: var(--info); }
 .sync-icon.green { background-color: var(--success-light); color: var(--success); }
+.sync-icon.purple { background-color: var(--purple-light); color: var(--purple); }
 
 .sync-details {
     display: flex;

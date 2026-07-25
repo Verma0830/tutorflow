@@ -76,7 +76,13 @@ const elements = {
     // Toast
     toast: document.getElementById("toast"),
     toastIcon: document.getElementById("toast-icon"),
-    toastMessage: document.getElementById("toast-message")
+    toastMessage: document.getElementById("toast-message"),
+    
+    // Google Sheets Sync
+    syncUrlInput: document.getElementById("sync-url-input"),
+    saveSyncUrlBtn: document.getElementById("save-sync-url-btn"),
+    syncStatusText: document.getElementById("sync-status-text"),
+    forceSyncBtn: document.getElementById("force-sync-btn")
 };
 
 // --- Initialization ---
@@ -205,6 +211,15 @@ function toggleTheme() {
 
 // --- Data Loading & Storage ---
 async function loadInitialData() {
+    // If Cloud Sync URL is configured and online, load from cloud first!
+    if (syncUrl && navigator.onLine) {
+        const cloudLoaded = await fetchFromCloud();
+        if (cloudLoaded) {
+            updateSyncUI();
+            return;
+        }
+    }
+    
     // Load Students
     try {
         const cachedStudents = localStorage.getItem("tutorflow_students");
@@ -265,6 +280,8 @@ async function loadInitialData() {
         console.error("Failed to load cached fees", err);
         state.fees = {};
     }
+    
+    updateSyncUI();
 }
 
 function saveData() {
@@ -399,6 +416,45 @@ function setupEventListeners() {
             showToast("Starter guide hidden.", "info");
         });
     }
+
+    // Google Sheets Sync Listeners
+    if (elements.saveSyncUrlBtn) {
+        elements.saveSyncUrlBtn.addEventListener("click", async () => {
+            const url = elements.syncUrlInput.value.trim();
+            localStorage.setItem("tutorflow_sync_url", url);
+            syncUrl = url;
+            updateSyncUI();
+            
+            if (url) {
+                showToast("Sync URL saved! Initializing cloud database...", "info");
+                // Upload current local state to cloud so she doesn't lose anything
+                await syncToCloud("sync_all", { students: state.students, attendance: state.attendance, fees: state.fees });
+                showToast("Cloud sync successfully set up and active!", "success");
+            } else {
+                showToast("Cloud Sync disabled. Switching to local storage.", "info");
+            }
+            updateAppView();
+        });
+    }
+
+    if (elements.forceSyncBtn) {
+        elements.forceSyncBtn.addEventListener("click", async () => {
+            if (!navigator.onLine) {
+                showToast("You are offline. Cannot fetch from cloud.", "error");
+                return;
+            }
+            const success = await fetchFromCloud();
+            if (success) {
+                updateAppView();
+                showToast("Latest data loaded from Google Sheets!", "success");
+            } else {
+                showToast("Failed to fetch from Google Sheets.", "error");
+            }
+        });
+    }
+
+    // Automatic online queue flushing
+    window.addEventListener("online", flushSyncQueue);
 }
 
 // --- Sunday Default holiday Auto-Check ---
@@ -878,15 +934,18 @@ function renderAttendanceList() {
                     state.attendance[state.currentDate] = {};
                 }
                 
+                let statusVal = "";
                 if (state.attendance[state.currentDate][sId] === stat) {
                     // Remove if clicked again
                     delete state.attendance[state.currentDate][sId];
                 } else {
                     state.attendance[state.currentDate][sId] = stat;
+                    statusVal = stat;
                 }
                 
                 saveData();
                 renderAttendanceList();
+                syncToCloud("update_attendance", { date: state.currentDate, studentId: sId, status: statusVal });
             });
         });
         
@@ -917,6 +976,7 @@ function markAllDisplayedPresent() {
     saveData();
     renderAttendanceList();
     showToast(`Marked ${filteredStudents.length} students as Present`, "success");
+    syncToCloud("sync_all", { students: state.students, attendance: state.attendance, fees: state.fees });
 }
 
 function markAllDisplayedOff() {
@@ -942,6 +1002,7 @@ function markAllDisplayedOff() {
     saveData();
     renderAttendanceList();
     showToast(`Marked ${filteredStudents.length} students as Tuition Holiday`, "success");
+    syncToCloud("sync_all", { students: state.students, attendance: state.attendance, fees: state.fees });
 }
 
 // --- Fees View Logic ---
@@ -1012,10 +1073,12 @@ function renderFeesList() {
                 state.fees[state.currentMonth] = {};
             }
             
-            state.fees[state.currentMonth][student.id] = !isPaid;
+            const nextPaidState = !isPaid;
+            state.fees[state.currentMonth][student.id] = nextPaidState;
             saveData();
             renderFeesList();
-            showToast(`${student.name}'s fees marked as ${!isPaid ? 'Paid' : 'Pending'}`, "success");
+            showToast(`${student.name}'s fees marked as ${nextPaidState ? 'Paid' : 'Pending'}`, "success");
+            syncToCloud("update_fee", { month: state.currentMonth, studentId: student.id, isPaid: nextPaidState });
         });
         
         listContainer.appendChild(row);
@@ -1078,6 +1141,7 @@ function renderRosterList() {
                 populateClassFilters();
                 renderRosterList();
                 showToast("Student deleted successfully", "success");
+                syncToCloud("sync_all", { students: state.students, attendance: state.attendance, fees: state.fees });
             }
         });
         
@@ -1150,6 +1214,7 @@ function handleStudentFormSubmit(e) {
     saveData();
     closeStudentModal();
     updateAppView();
+    syncToCloud("sync_all", { students: state.students, attendance: state.attendance, fees: state.fees });
 }
 
 // --- Excel Import Logic ---
@@ -1242,6 +1307,7 @@ function handleExcelImport(e) {
                 saveData();
                 updateAppView();
                 showToast(`Successfully imported ${newStudents.length} students from Excel!`, "success");
+                syncToCloud("sync_all", { students: state.students, attendance: state.attendance, fees: state.fees });
             }
         } catch (error) {
             console.error(error);
@@ -1360,4 +1426,100 @@ function showToast(message, type = "success") {
     setTimeout(() => {
         elements.toast.classList.remove("active");
     }, 3000);
+}
+
+// --- Google Sheets Cloud Sync Settings and Syncing Logic ---
+let syncUrl = localStorage.getItem("tutorflow_sync_url") || "";
+
+function updateSyncUI() {
+    if (elements.syncUrlInput) {
+        elements.syncUrlInput.value = syncUrl;
+    }
+    
+    if (syncUrl) {
+        elements.syncStatusText.textContent = "Cloud Sync: Enabled (Auto-syncing changes)";
+        elements.syncStatusText.style.color = "var(--success)";
+        elements.forceSyncBtn.style.display = "flex";
+    } else {
+        elements.syncStatusText.textContent = "Cloud Sync: Disabled (Local Only)";
+        elements.syncStatusText.style.color = "var(--text-muted)";
+        elements.forceSyncBtn.style.display = "none";
+    }
+}
+
+async function syncToCloud(action, payload) {
+    if (!syncUrl) return;
+    
+    const body = {
+        action: action,
+        ...payload
+    };
+    
+    // Add to local offline queue first to guarantee persistence if network fails!
+    const queue = JSON.parse(localStorage.getItem("tutorflow_sync_queue") || "[]");
+    queue.push(body);
+    localStorage.setItem("tutorflow_sync_queue", JSON.stringify(queue));
+    
+    // Attempt to flush queue in the background
+    await flushSyncQueue();
+}
+
+async function flushSyncQueue() {
+    if (!syncUrl || !navigator.onLine) return;
+    
+    const queue = JSON.parse(localStorage.getItem("tutorflow_sync_queue") || "[]");
+    if (queue.length === 0) return;
+    
+    console.log(`Attempting to flush sync queue of size ${queue.length}...`);
+    
+    // We send them one by one to preserve transaction order
+    let successCount = 0;
+    for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        try {
+            const response = await fetch(syncUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain" // Using text/plain avoids CORS pre-flights with Google Apps Script!
+                },
+                body: JSON.stringify(item)
+            });
+            successCount++;
+        } catch (err) {
+            console.error("Failed to sync item", item, err);
+            // Halt queue processing on failure so we retry in order later
+            break;
+        }
+    }
+    
+    // Remove successfully processed items from the queue
+    if (successCount > 0) {
+        const remainingQueue = queue.slice(successCount);
+        localStorage.setItem("tutorflow_sync_queue", JSON.stringify(remainingQueue));
+        console.log(`Successfully synced ${successCount} items. Remaining queue size: ${remainingQueue.length}`);
+    }
+}
+
+async function fetchFromCloud() {
+    if (!syncUrl) return false;
+    
+    try {
+        const response = await fetch(syncUrl);
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.students && data.students.length > 0) {
+                state.students = data.students;
+                state.attendance = data.attendance || {};
+                state.fees = data.fees || {};
+                
+                // Cache locally
+                saveData();
+                return true;
+            }
+        }
+    } catch (err) {
+        console.error("Failed to fetch from Google Sheets", err);
+    }
+    return false;
 }
