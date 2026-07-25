@@ -1506,7 +1506,9 @@ function showToast(message, type = "success") {
 }
 
 // --- Google Sheets Cloud Sync Settings and Syncing Logic ---
-let syncUrl = localStorage.getItem("tutorflow_sync_url") || "";
+const defaultCloudUrl = "https://script.google.com/macros/s/AKfycby1dvn_ZlNx0dHLF9CeyQx65-Kxe_aUfT_uI5Sq0xtLPgOL1esBGL0-fnu3ctztexIHGQ/exec";
+const cachedCloudUrl = localStorage.getItem("tutorflow_sync_url");
+let syncUrl = cachedCloudUrl !== null ? cachedCloudUrl : defaultCloudUrl;
 
 function updateSyncUI() {
     if (elements.syncUrlInput) {
