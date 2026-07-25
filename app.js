@@ -206,56 +206,76 @@ function toggleTheme() {
 // --- Data Loading & Storage ---
 async function loadInitialData() {
     // Load Students
-    const cachedStudents = localStorage.getItem("tutorflow_students");
-    if (cachedStudents) {
-        state.students = JSON.parse(cachedStudents);
-        // Self-healing merge to pull joiningDates from students.json for existing students
-        try {
-            const response = await fetch("students.json");
-            if (response.ok) {
-                const freshStudents = await response.json();
-                let merged = false;
-                state.students.forEach(student => {
-                    const fresh = freshStudents.find(s => s.name.toLowerCase().trim() === student.name.toLowerCase().trim());
-                    if (fresh && fresh.joiningDate && !student.joiningDate) {
-                        student.joiningDate = fresh.joiningDate;
-                        merged = true;
+    try {
+        const cachedStudents = localStorage.getItem("tutorflow_students");
+        if (cachedStudents) {
+            state.students = JSON.parse(cachedStudents);
+            // Self-healing merge to pull joiningDates from students.json for existing students
+            try {
+                const response = await fetch("students.json");
+                if (response.ok) {
+                    const freshStudents = await response.json();
+                    let merged = false;
+                    state.students.forEach(student => {
+                        const fresh = freshStudents.find(s => s.name.toLowerCase().trim() === student.name.toLowerCase().trim());
+                        if (fresh && fresh.joiningDate && !student.joiningDate) {
+                            student.joiningDate = fresh.joiningDate;
+                            merged = true;
+                        }
+                    });
+                    if (merged) {
+                        localStorage.setItem("tutorflow_students", JSON.stringify(state.students));
                     }
-                });
-                if (merged) {
+                }
+            } catch (e) {
+                console.error("Failed to merge cached students with students.json", e);
+            }
+        } else {
+            // Fallback: Fetch from students.json
+            try {
+                const response = await fetch("students.json");
+                if (response.ok) {
+                    state.students = await response.json();
                     localStorage.setItem("tutorflow_students", JSON.stringify(state.students));
                 }
+            } catch (e) {
+                console.error("Failed to load students.json, loading empty list.", e);
+                state.students = [];
             }
-        } catch (e) {
-            console.error("Failed to merge cached students with students.json", e);
         }
-    } else {
-        // Fallback: Fetch from students.json
-        try {
-            const response = await fetch("students.json");
-            if (response.ok) {
-                state.students = await response.json();
-                localStorage.setItem("tutorflow_students", JSON.stringify(state.students));
-            }
-        } catch (e) {
-            console.error("Failed to load students.json, loading empty list.", e);
-            state.students = [];
-        }
+    } catch (err) {
+        console.error("Failed to load cached students", err);
+        state.students = [];
     }
     
     // Load Attendance
-    const cachedAttendance = localStorage.getItem("tutorflow_attendance");
-    state.attendance = cachedAttendance ? JSON.parse(cachedAttendance) : {};
+    try {
+        const cachedAttendance = localStorage.getItem("tutorflow_attendance");
+        state.attendance = cachedAttendance ? JSON.parse(cachedAttendance) : {};
+    } catch (err) {
+        console.error("Failed to load cached attendance", err);
+        state.attendance = {};
+    }
     
     // Load Fees
-    const cachedFees = localStorage.getItem("tutorflow_fees");
-    state.fees = cachedFees ? JSON.parse(cachedFees) : {};
+    try {
+        const cachedFees = localStorage.getItem("tutorflow_fees");
+        state.fees = cachedFees ? JSON.parse(cachedFees) : {};
+    } catch (err) {
+        console.error("Failed to load cached fees", err);
+        state.fees = {};
+    }
 }
 
 function saveData() {
-    localStorage.setItem("tutorflow_students", JSON.stringify(state.students));
-    localStorage.setItem("tutorflow_attendance", JSON.stringify(state.attendance));
-    localStorage.setItem("tutorflow_fees", JSON.stringify(state.fees));
+    try {
+        localStorage.setItem("tutorflow_students", JSON.stringify(state.students));
+        localStorage.setItem("tutorflow_attendance", JSON.stringify(state.attendance));
+        localStorage.setItem("tutorflow_fees", JSON.stringify(state.fees));
+    } catch (e) {
+        console.error("Failed to save data to localStorage", e);
+        showToast("Storage error: Private Mode might block saving.", "error");
+    }
 }
 
 // --- Event Listeners ---
