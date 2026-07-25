@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TutorFlow - Premium Attendance & Fee Tracker</title>
+    <!-- PWA Meta tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TutorFlow">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <!-- SheetJS (XLSX Parser/Writer) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Flatpickr (Premium Custom Calendar) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" id="flatpickr-dark-theme" disabled>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body class="light-theme">
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="material-symbols-rounded logo-icon">auto_stories</span>
+                <span class="logo-text">Tutor<span>Flow</span></span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-tab="dashboard">
+                    <span class="material-symbols-rounded">dashboard</span>
+                    Dashboard
+                </button>
+                <button class="nav-btn" data-tab="attendance">
+                    <span class="material-symbols-rounded">check_box</span>
+                    Attendance
+                </button>
+                <button class="nav-btn" data-tab="fees">
+                    <span class="material-symbols-rounded">payments</span>
+                    Fee Tracker
+                </button>
+                <button class="nav-btn" data-tab="roster">
+                    <span class="material-symbols-rounded">group</span>
+                    Students
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="theme-toggle-btn" class="theme-toggle">
+                    <span class="material-symbols-rounded">dark_mode</span>
+                    <span>Dark Mode</span>
+                </button>
+                <div class="teacher-profile">
+                    <div class="profile-avatar">T</div>
+                    <div class="profile-info">
+                        <span class="profile-name">Tuition Teacher</span>
+                        <span class="profile-role">Admin Portal</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header Bar -->
+            <header class="top-bar">
+                <div class="header-search">
+                    <span class="material-symbols-rounded search-icon">search</span>
+                    <input type="text" id="global-search" placeholder="Search students by name...">
+                </div>
+                <div class="header-actions">
+                    <div class="date-picker-wrapper">
+                        <span class="material-symbols-rounded calendar-icon">calendar_month</span>
+                        <input type="date" id="attendance-date" name="attendance-date">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Scrollable Content -->
+            <div class="content-wrapper">
+                
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="tab-dashboard" class="tab-content active">
+                    <div class="view-header">
+                        <div>
+                            <h1>Dashboard</h1>
+                            <p class="subtitle">Overview of today's attendance and fee collections</p>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper blue">
+                                <span class="material-symbols-rounded">groups</span>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Total Students</span>
+                                <h3 id="stat-total-students">0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper green">
+                                <span class="material-symbols-rounded">verified_user</span>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Present Today</span>
+                                <h3 id="stat-present-today">0</h3>
+                                <span class="stat-subtext" id="stat-present-pct">0% attendance</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper red">
+                                <span class="material-symbols-rounded">cancel</span>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Absent Today</span>
+                                <h3 id="stat-absent-today">0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper purple">
+                                <span class="material-symbols-rounded">paid</span>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Fees Collected</span>
+                                <h3 id="stat-fees-collected">₹0</h3>
+                                <span class="stat-subtext" id="stat-fees-progress">0% of total ₹0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Visual Insights -->
+                    <div class="dashboard-grid">
+                        <!-- Chart Card -->
+                        <div class="dashboard-card chart-card">
+                            <div class="card-header">
+                                <h3>Attendance Trend (Last 7 Days)</h3>
+                            </div>
+                            <div class="card-body chart-container">
+                                <canvas id="attendance-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Class Summary Card -->
+                        <div class="dashboard-card summary-card">
+                            <div class="card-header">
+                                <h3>Class-wise Overview</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="class-list-table-wrapper">
+                                    <table class="class-summary-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Class/Grade</th>
+                                                <th>Total Students</th>
+                                                <th>Present Today</th>
+                                                <th>Attendance Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="class-summary-rows">
+                                            <!-- Dynamically filled -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. ATTENDANCE MARKER VIEW -->
+                <section id="tab-attendance" class="tab-content">
+                    <div class="view-header">
+                        <div>
+                            <h1 id="attendance-view-title">Attendance Marker</h1>
+                            <p class="subtitle">Mark presence, absence, or tardiness for today</p>
+                        </div>
+                        <div class="view-header-actions" style="display: flex; gap: 12px;">
+                            <button class="btn btn-secondary" id="mark-all-present-btn">
+                                <span class="material-symbols-rounded">done_all</span>
+                                Mark All Present
+                            </button>
+                            <button class="btn btn-secondary" id="mark-all-off-btn">
+                                <span class="material-symbols-rounded">toggle_off</span>
+                                Tuition Holiday
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filters bar -->
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <label>Filter by Class:</label>
+                            <div class="pill-filters" id="class-filters-attendance">
+                                <button class="pill-btn active" data-class="all">All Grades</button>
+                                <!-- Dynamically populated classes -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance List Container -->
+                    <div class="attendance-list-container">
+                        <div class="list-headers">
+                            <div class="hdr-info">Student Details</div>
+                            <div class="hdr-class">Class</div>
+                            <div class="hdr-status">Status Toggle</div>
+                        </div>
+                        <div id="attendance-student-list" class="student-list">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. FEE TRACKER VIEW -->
+                <section id="tab-fees" class="tab-content">
+                    <div class="view-header">
+                        <div>
+                            <h1>Fee Tracker</h1>
+                            <p class="subtitle">Record monthly tuition fees payments</p>
+                        </div>
+                        <div class="view-header-actions">
+                            <div class="month-selector-wrapper">
+                                <span class="material-symbols-rounded">calendar_today</span>
+                                <input type="month" id="fee-month-selector">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters bar -->
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <label>Filter by Class:</label>
+                            <div class="pill-filters" id="class-filters-fees">
+                                <button class="pill-btn active" data-class="all">All Grades</button>
+                                <!-- Dynamically populated classes -->
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Payment Status:</label>
+                            <select id="fee-status-filter" class="form-select">
+                                <option value="all">All Payments</option>
+                                <option value="pending">Pending</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Fees List Container -->
+                    <div class="fees-list-container">
+                        <div class="list-headers">
+                            <div class="hdr-info">Student Details</div>
+                            <div class="hdr-class">Class</div>
+                            <div class="hdr-amount">Fee Amount</div>
+                            <div class="hdr-action">Payment Status</div>
+                        </div>
+                        <div id="fees-student-list" class="student-list">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. STUDENT DATABASE & SYNC VIEW -->
+                <section id="tab-roster" class="tab-content">
+                    <div class="view-header">
+                        <div>
+                            <h1>Students & Excel Sync</h1>
+                            <p class="subtitle">Manage student list and synchronize with your Excel sheet</p>
+                        </div>
+                        <div class="view-header-actions">
+                            <button class="btn btn-primary" id="add-student-btn">
+                                <span class="material-symbols-rounded">person_add</span>
+                                Add New Student
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sync Panel -->
+                    <div class="sync-panel">
+                        <div class="sync-card">
+                            <div class="sync-icon blue">
+                                <span class="material-symbols-rounded">publish</span>
+                            </div>
+                            <div class="sync-details">
+                                <h3>Import from Excel</h3>
+                                <p>Upload your <code>attendance tracker.xlsx</code> file to reload names, classes, and fees.</p>
+                                <label for="excel-upload-input" class="btn btn-secondary upload-label">
+                                    <span class="material-symbols-rounded">file_upload</span>
+                                    Choose Excel File
+                                </label>
+                                <input type="file" id="excel-upload-input" accept=".xlsx, .xls" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="sync-card">
+                            <div class="sync-icon green">
+                                <span class="material-symbols-rounded">download</span>
+                            </div>
+                            <div class="sync-details">
+                                <h3>Export to Excel</h3>
+                                <p>Download the attendance sheet for the selected month containing grades, names, fees, and days 1-31.</p>
+                                <button class="btn btn-success" id="excel-export-btn">
+                                    <span class="material-symbols-rounded">file_download</span>
+                                    Export Excel File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Roster List Container -->
+                    <div class="roster-list-container">
+                        <div class="roster-header-bar">
+                            <h3>Active Roster (<span id="roster-count">0</span> students)</h3>
+                            <div class="filter-group">
+                                <label>Class Filter:</label>
+                                <select id="roster-class-filter" class="form-select">
+                                    <option value="all">All Classes</option>
+                                    <!-- Dynamic options -->
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="class-list-table-wrapper">
+                            <table class="roster-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Class/Grade</th>
+                                        <th>Base Fee</th>
+                                        <th>Joining Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roster-table-rows">
+                                    <!-- Dynamically filled -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ADD/EDIT STUDENT MODAL -->
+    <div id="student-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-title">Add New Student</h3>
+                <button class="modal-close" id="modal-close-btn">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <form id="student-form">
+                <input type="hidden" id="student-edit-id">
+                <div class="form-group">
+                    <label for="student-name">Student Name *</label>
+                    <input type="text" id="student-name" required placeholder="Enter student's full name">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="student-class">Class/Grade *</label>
+                        <input type="text" id="student-class" required placeholder="e.g. 4, 6, 10">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-fees">Monthly Fees (₹) *</label>
+                        <input type="number" id="student-fees" required min="0" placeholder="e.g. 800">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="student-joining-date">Joining Date (Optional)</label>
+                    <input type="date" id="student-joining-date">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast">
+        <span class="material-symbols-rounded toast-icon" id="toast-icon">check_circle</span>
+        <span id="toast-message">Action successful!</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
