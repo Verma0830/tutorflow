@@ -76,6 +76,10 @@
         <main class="main-content">
             <!-- Top Header Bar -->
             <header class="top-bar">
+                <div class="header-logo-mobile">
+                    <span class="material-symbols-rounded logo-icon-mobile">auto_stories</span>
+                    <span class="logo-text-mobile">Tutor<span>Flow</span></span>
+                </div>
                 <div class="header-search">
                     <span class="material-symbols-rounded search-icon">search</span>
                     <input type="text" id="global-search" placeholder="Search students by name...">
@@ -85,6 +89,9 @@
                         <span class="material-symbols-rounded calendar-icon">calendar_month</span>
                         <input type="date" id="attendance-date" name="attendance-date">
                     </div>
+                    <button id="mobile-theme-toggle-btn" class="theme-toggle-btn-mobile" title="Toggle Dark/Light Mode">
+                        <span class="material-symbols-rounded">dark_mode</span>
+                    </button>
                 </div>
             </header>
 
@@ -97,6 +104,37 @@
                         <div>
                             <h1>Dashboard</h1>
                             <p class="subtitle">Overview of today's attendance and fee collections</p>
+                        </div>
+                    </div>
+
+                    <!-- Onboarding Guide Banner -->
+                    <div class="onboarding-card" id="onboarding-guide">
+                        <div class="onboarding-header">
+                            <div class="onboarding-title-wrapper">
+                                <span class="material-symbols-rounded onboarding-icon">emoji_objects</span>
+                                <h4>Quick Starter Guide for Mom 🌟</h4>
+                            </div>
+                            <button class="close-onboarding-btn" id="close-onboarding-btn" title="Hide Guide">
+                                <span class="material-symbols-rounded">close</span>
+                            </button>
+                        </div>
+                        <div class="onboarding-body">
+                            <div class="onboarding-step">
+                                <span class="step-num">1</span>
+                                <p><strong>Mark Attendance:</strong> Go to the <strong>Attendance</strong> tab, select the date, and click status buttons. Sundays are automatically set to <strong>Tuition Holiday</strong>!</p>
+                            </div>
+                            <div class="onboarding-step">
+                                <span class="step-num">2</span>
+                                <p><strong>Add/Edit Students:</strong> Switch to the <strong>Students</strong> tab to add new students, edit base fees, or set their <strong>Joining Date</strong> (for mid-month fee pro-rating).</p>
+                            </div>
+                            <div class="onboarding-step">
+                                <span class="step-num">3</span>
+                                <p><strong>Fee Tracking:</strong> Go to the <strong>Fee Tracker</strong>. The system automatically subtracts Tuition Holiday days to calculate exact prorated fees to pay!</p>
+                            </div>
+                            <div class="onboarding-step">
+                                <span class="step-num">4</span>
+                                <p><strong>Excel Sync:</strong> On your laptop, you can upload your excel sheet in the <strong>Students</strong> tab, or download the updated monthly sheets anytime!</p>
+                            </div>
                         </div>
                     </div>
 

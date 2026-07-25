@@ -25,6 +25,7 @@ const elements = {
     navButtons: document.querySelectorAll(".nav-btn"),
     tabContents: document.querySelectorAll(".tab-content"),
     themeToggleBtn: document.getElementById("theme-toggle-btn"),
+    mobileThemeToggleBtn: document.getElementById("mobile-theme-toggle-btn"),
     
     // Header
     globalSearch: document.getElementById("global-search"),
@@ -162,12 +163,18 @@ function setupTheme() {
         document.body.classList.remove("light-theme");
         elements.themeToggleBtn.querySelector("span").textContent = "light_mode";
         elements.themeToggleBtn.querySelector("span:last-child").textContent = "Light Mode";
+        if (elements.mobileThemeToggleBtn) {
+            elements.mobileThemeToggleBtn.querySelector("span").textContent = "light_mode";
+        }
         if (darkFpTheme) darkFpTheme.removeAttribute("disabled");
     } else {
         document.body.classList.add("light-theme");
         document.body.classList.remove("dark-theme");
         elements.themeToggleBtn.querySelector("span").textContent = "dark_mode";
         elements.themeToggleBtn.querySelector("span:last-child").textContent = "Dark Mode";
+        if (elements.mobileThemeToggleBtn) {
+            elements.mobileThemeToggleBtn.querySelector("span").textContent = "dark_mode";
+        }
         if (darkFpTheme) darkFpTheme.setAttribute("disabled", "true");
     }
 }
@@ -180,6 +187,9 @@ function toggleTheme() {
     
     elements.themeToggleBtn.querySelector("span").textContent = isDark ? "light_mode" : "dark_mode";
     elements.themeToggleBtn.querySelector("span:last-child").textContent = isDark ? "Light Mode" : "Dark Mode";
+    if (elements.mobileThemeToggleBtn) {
+        elements.mobileThemeToggleBtn.querySelector("span").textContent = isDark ? "light_mode" : "dark_mode";
+    }
     
     const darkFpTheme = document.getElementById("flatpickr-dark-theme");
     if (darkFpTheme) {
@@ -272,6 +282,9 @@ function setupEventListeners() {
     
     // Theme Toggle
     elements.themeToggleBtn.addEventListener("click", toggleTheme);
+    if (elements.mobileThemeToggleBtn) {
+        elements.mobileThemeToggleBtn.addEventListener("click", toggleTheme);
+    }
     
     // Global Search
     elements.globalSearch.addEventListener("input", (e) => {
@@ -352,6 +365,20 @@ function setupEventListeners() {
     // Excel Import / Export
     elements.excelUploadInput.addEventListener("change", handleExcelImport);
     elements.excelExportBtn.addEventListener("click", handleExcelExport);
+
+    // Onboarding starter guide controls
+    const onboardingCard = document.getElementById("onboarding-guide");
+    const closeOnboardingBtn = document.getElementById("close-onboarding-btn");
+    if (onboardingCard && closeOnboardingBtn) {
+        if (localStorage.getItem("tutorflow_hide_onboarding") === "true") {
+            onboardingCard.style.display = "none";
+        }
+        closeOnboardingBtn.addEventListener("click", () => {
+            onboardingCard.style.display = "none";
+            localStorage.setItem("tutorflow_hide_onboarding", "true");
+            showToast("Starter guide hidden.", "info");
+        });
+    }
 }
 
 // --- Sunday Default holiday Auto-Check ---
