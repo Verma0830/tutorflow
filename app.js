@@ -284,6 +284,7 @@ async function loadInitialData() {
     
     normalizeAllStudentJoiningDates();
     updateSyncUI();
+    flushSyncQueue();
 }
 
 function saveData() {
@@ -1549,6 +1550,7 @@ async function flushSyncQueue() {
         try {
             const response = await fetch(syncUrl, {
                 method: "POST",
+                mode: "no-cors",
                 headers: {
                     "Content-Type": "text/plain" // Using text/plain avoids CORS pre-flights with Google Apps Script!
                 },
@@ -1572,6 +1574,13 @@ async function flushSyncQueue() {
 
 async function fetchFromCloud() {
     if (!syncUrl) return false;
+    
+    // Prevent cloud overwrite if local queue is dirty!
+    const queue = JSON.parse(localStorage.getItem("tutorflow_sync_queue") || "[]");
+    if (queue.length > 0) {
+        console.log("Queue has unsynced local changes. Skipping cloud pull.");
+        return false;
+    }
     
     try {
         const response = await fetch(syncUrl);
