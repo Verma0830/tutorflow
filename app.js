@@ -284,27 +284,65 @@ async function loadInitialData() {
 
 async function backgroundCloudSync() {
     try {
-        // First, push any pending local changes to the cloud
-        await flushSyncAll();
-        await flushLegacyQueue();
+        // Clear any stale sync buffers from previous broken versions
+        // This prevents old cached data from overwriting fresh cloud data
+        localStorage.removeItem("tutorflow_pending_sync_all");
+        localStorage.removeItem("tutorflow_sync_retry");
+        localStorage.setItem("tutorflow_sync_queue", "[]");
         
-        // Then pull latest data from cloud (includes changes from other devices)
+        // PULL from cloud FIRST (source of truth - has data from all devices)
         const response = await fetch(syncUrl);
         if (response.ok) {
             const data = await response.json();
             
             if (data.students && data.students.length > 0) {
+                // Merge: use cloud data as the base
                 state.students = data.students;
                 normalizeAllStudentJoiningDates();
-                state.attendance = data.attendance || {};
-                state.fees = data.fees || {};
                 
-                // Cache locally
+                // For attendance: merge local + cloud (keep both, local wins on conflicts)
+                const cloudAttendance = data.attendance || {};
+                const localAttendance = { ...state.attendance };
+                const mergedAttendance = { ...cloudAttendance };
+                
+                // Layer local attendance on top of cloud (local changes that haven't synced yet win)
+                for (const dateKey in localAttendance) {
+                    if (!mergedAttendance[dateKey]) {
+                        mergedAttendance[dateKey] = {};
+                    }
+                    for (const studentId in localAttendance[dateKey]) {
+                        // Local change wins over cloud
+                        mergedAttendance[dateKey][studentId] = localAttendance[dateKey][studentId];
+                    }
+                }
+                
+                state.attendance = mergedAttendance;
+                state.fees = { ...(data.fees || {}), ...state.fees };
+                
+                // Cache merged data locally
                 saveData();
                 
-                // Re-render the UI with the fresh cloud data
+                // Push the merged data back to cloud so all devices have the same state
+                await fetch(syncUrl, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({
+                        action: "sync_all",
+                        students: state.students,
+                        attendance: state.attendance,
+                        fees: state.fees
+                    })
+                });
+                
+                // Re-render the UI with the merged data
                 updateAppView();
-                console.log("Background cloud sync complete - UI updated with latest cloud data.");
+                
+                if (elements.syncStatusText) {
+                    elements.syncStatusText.textContent = "Cloud Sync: Enabled (Auto-syncing changes)";
+                    elements.syncStatusText.style.color = "var(--success)";
+                }
+                console.log("Background cloud sync complete - UI updated with merged data.");
             }
         }
     } catch (err) {
