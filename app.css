@@ -1747,5 +1747,12 @@ input:focus, select:focus, textarea:focus {
     width: 135px !important;
 }
 
+/* Double-safety: hide the attendance class filter bar globally, even if devices load cached index.html files */
+#class-filters-attendance,
+#tab-attendance .filters-bar {
+    display: none !important;
+}
+
+
 
 
