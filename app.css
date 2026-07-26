@@ -95,7 +95,7 @@ body.dark-theme {
 }
 
 body {
-    background-color: var(--bg-app);
+    background: var(--bg-app);
     color: var(--text-main);
     transition: background-color 0.3s ease, color 0.3s ease;
     overflow: hidden; /* App view handles scrolling internally */
@@ -1507,7 +1507,7 @@ body::before {
     right: -10%;
     width: 60vw;
     height: 60vw;
-    background: radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, rgba(139, 92, 246, 0.08) 40%, rgba(255, 255, 255, 0) 70%);
+    background: radial-gradient(circle, rgba(94, 92, 230, 0.1) 0%, rgba(139, 92, 246, 0.08) 40%, rgba(0, 0, 0, 0) 70%);
     filter: blur(120px);
     z-index: -2;
     pointer-events: none;
@@ -1521,7 +1521,7 @@ body::after {
     left: -10%;
     width: 70vw;
     height: 70vw;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.07) 0%, rgba(59, 130, 246, 0.08) 40%, rgba(255, 255, 255, 0) 70%);
+    background: radial-gradient(circle, rgba(52, 199, 89, 0.05) 0%, rgba(100, 210, 255, 0.06) 40%, rgba(0, 0, 0, 0) 70%);
     filter: blur(140px);
     z-index: -2;
     pointer-events: none;
@@ -1529,11 +1529,11 @@ body::after {
 }
 
 body.dark-theme::before {
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(0, 0, 0, 0) 80%);
+    background: radial-gradient(circle, rgba(94, 92, 230, 0.12) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(0, 0, 0, 0) 80%);
 }
 
 body.dark-theme::after {
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(0, 0, 0, 0) 80%);
+    background: radial-gradient(circle, rgba(52, 199, 89, 0.07) 0%, rgba(100, 210, 255, 0.08) 50%, rgba(0, 0, 0, 0) 80%);
 }
 
 @keyframes float-blob-1 {
@@ -1559,66 +1559,191 @@ body.dark-theme::after {
 .toast,
 .date-picker-wrapper,
 .month-selector-wrapper {
-    backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
-/* Enhance glass buttons and inputs */
-.pill-btn,
-.status-btn,
-.fee-action-btn,
-.form-select,
-.header-search input {
-    background-color: rgba(255, 255, 255, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: var(--transition);
+/* Glass Card float transitions */
+.stat-card,
+.dashboard-card,
+.sync-card,
+.roster-list-container,
+.attendance-list-container,
+.fees-list-container,
+.modal-card {
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+                backdrop-filter 0.4s ease !important;
 }
 
-body.dark-theme .pill-btn,
-body.dark-theme .status-btn,
-body.dark-theme .fee-action-btn,
-body.dark-theme .form-select,
-body.dark-theme .header-search input {
-    background-color: rgba(30, 41, 59, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+.stat-card:hover,
+.dashboard-card:hover,
+.sync-card:hover,
+.roster-list-container:hover,
+.attendance-list-container:hover,
+.fees-list-container:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45) !important;
+    backdrop-filter: blur(28px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
 }
 
-/* Glass hover items */
-.pill-btn:hover,
-.status-btn:hover,
-.fee-action-btn:hover {
-    background-color: rgba(255, 255, 255, 0.7);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-1px);
+/* Individual Stat Card glows and accents */
+.stat-card:nth-child(1) {
+    border-left: 4px solid var(--primary) !important;
+}
+.stat-card:nth-child(1):hover {
+    box-shadow: 0 16px 40px rgba(94, 92, 230, 0.18), 0 0 20px rgba(94, 92, 230, 0.05) !important;
 }
 
-body.dark-theme .pill-btn:hover,
-body.dark-theme .status-btn:hover,
-body.dark-theme .fee-action-btn:hover {
-    background-color: rgba(30, 41, 59, 0.6);
-    border-color: rgba(255, 255, 255, 0.12);
+.stat-card:nth-child(2) {
+    border-left: 4px solid var(--success) !important;
+}
+.stat-card:nth-child(2):hover {
+    box-shadow: 0 16px 40px rgba(52, 199, 89, 0.18), 0 0 20px rgba(52, 199, 89, 0.05) !important;
 }
 
-/* Active state for glass pills */
-.pill-btn.active {
-    background-color: var(--primary) !important;
-    border-color: var(--primary) !important;
-    color: var(--text-white) !important;
+.stat-card:nth-child(3) {
+    border-left: 4px solid var(--danger) !important;
+}
+.stat-card:nth-child(3):hover {
+    box-shadow: 0 16px 40px rgba(255, 69, 58, 0.18), 0 0 20px rgba(255, 69, 58, 0.05) !important;
+}
+
+.stat-card:nth-child(4) {
+    border-left: 4px solid var(--warning) !important;
+}
+.stat-card:nth-child(4):hover {
+    box-shadow: 0 16px 40px rgba(255, 159, 10, 0.18), 0 0 20px rgba(255, 159, 10, 0.05) !important;
+}
+
+/* Button overrides */
+.btn-primary, .btn-success {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+}
+
+.btn-primary:hover, .btn-success:hover {
+    background: rgba(94, 92, 230, 0.25) !important;
+    border-color: rgba(94, 92, 230, 0.45) !important;
+    box-shadow: 0 0 20px rgba(94, 92, 230, 0.4) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #C7C7CC !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #FFFFFF !important;
+}
+
+/* Outlined status button glows (Soft glowing colors instead of flat fills) */
+.status-btn {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #C7C7CC !important;
+    border-radius: 12px !important;
+}
+
+.status-btn[data-status="present"].active,
+.status-btn[data-status="present"]:hover {
+    background: rgba(52, 199, 89, 0.15) !important;
+    border-color: rgba(52, 199, 89, 0.45) !important;
+    color: #34C759 !important;
+    box-shadow: 0 0 15px rgba(52, 199, 89, 0.35) !important;
+}
+
+.status-btn[data-status="absent"].active,
+.status-btn[data-status="absent"]:hover {
+    background: rgba(255, 69, 58, 0.15) !important;
+    border-color: rgba(255, 69, 58, 0.45) !important;
+    color: #FF453A !important;
+    box-shadow: 0 0 15px rgba(255, 69, 58, 0.35) !important;
+}
+
+.status-btn[data-status="late"].active,
+.status-btn[data-status="late"]:hover {
+    background: rgba(255, 159, 10, 0.15) !important;
+    border-color: rgba(255, 159, 10, 0.45) !important;
+    color: #FF9F0A !important;
+    box-shadow: 0 0 15px rgba(255, 159, 10, 0.35) !important;
+}
+
+.status-btn[data-status="off"].active,
+.status-btn[data-status="off"]:hover {
+    background: rgba(100, 210, 255, 0.15) !important;
+    border-color: rgba(100, 210, 255, 0.45) !important;
+    color: #64D2FF !important;
+    box-shadow: 0 0 15px rgba(100, 210, 255, 0.35) !important;
+}
+
+/* Glass Tables, Lists and Rows */
+.student-row, .fee-row {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    transition: var(--transition) !important;
+}
+
+.student-row:hover, .fee-row:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Soft glowing text labels for fee payments */
+.fee-status-badge.paid {
+    background: rgba(52, 199, 89, 0.12) !important;
+    color: #34C759 !important;
+    border: 1px solid rgba(52, 199, 89, 0.25) !important;
+    box-shadow: 0 0 10px rgba(52, 199, 89, 0.15) !important;
+}
+
+.fee-status-badge.pending {
+    background: rgba(255, 159, 10, 0.12) !important;
+    color: #FF9F0A !important;
+    border: 1px solid rgba(255, 159, 10, 0.25) !important;
+    box-shadow: 0 0 10px rgba(255, 159, 10, 0.15) !important;
+}
+
+/* Dropdowns, forms and Inputs */
+input[type="text"],
+input[type="date"],
+input[type="month"],
+input[type="number"],
+select,
+textarea {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #FFFFFF !important;
+    border-radius: 12px !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    transition: var(--transition) !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none !important;
+    border-color: rgba(94, 92, 230, 0.4) !important;
+    box-shadow: 0 0 12px rgba(94, 92, 230, 0.25) !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Glassmorphism Flatpickr Calendar */
 .flatpickr-calendar {
-    background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: var(--shadow-lg) !important;
 }
 
-body.dark-theme .flatpickr-calendar {
-    background: rgba(30, 41, 59, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
 

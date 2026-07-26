@@ -161,7 +161,7 @@ function initDates() {
 
 // --- Theme Setup ---
 function setupTheme() {
-    const savedTheme = localStorage.getItem("tutorflow_theme") || "light";
+    const savedTheme = localStorage.getItem("tutorflow_theme") || "dark";
     const darkFpTheme = document.getElementById("flatpickr-dark-theme");
     
     if (savedTheme === "dark") {
@@ -968,9 +968,8 @@ function renderAttendanceChart() {
         state.chartInstance.destroy();
     }
     
-    const isDark = document.body.classList.contains("dark-theme");
-    const gridColor = isDark ? "#374151" : "#e2e8f0";
-    const labelColor = isDark ? "#9ca3af" : "#64748b";
+    const gridColor = "rgba(255, 255, 255, 0.08)";
+    const labelColor = "#8E8E93";
     
     state.chartInstance = new Chart(ctx, {
         type: 'line',
@@ -979,13 +978,19 @@ function renderAttendanceChart() {
             datasets: [{
                 label: 'Present %',
                 data: attendanceData,
-                borderColor: '#4f46e5',
-                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                borderColor: '#34C759',
+                backgroundColor: 'rgba(52, 199, 89, 0.08)',
                 fill: true,
-                tension: 0.3,
+                tension: 0.45,
                 borderWidth: 3,
-                pointBackgroundColor: '#4f46e5',
-                pointHoverRadius: 7
+                pointBackgroundColor: '#34C759',
+                pointBorderColor: '#FFFFFF',
+                pointBorderWidth: 1.5,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointHoverBackgroundColor: '#34C759',
+                pointHoverBorderColor: '#FFFFFF',
+                pointHoverBorderWidth: 2
             }]
         },
         options: {
@@ -997,7 +1002,7 @@ function renderAttendanceChart() {
             scales: {
                 x: {
                     grid: { color: gridColor },
-                    ticks: { color: labelColor, font: { family: 'Inter' } }
+                    ticks: { color: labelColor, font: { family: 'SF Pro Display, Inter, sans-serif', weight: '500' } }
                 },
                 y: {
                     min: 0,
@@ -1005,7 +1010,7 @@ function renderAttendanceChart() {
                     grid: { color: gridColor },
                     ticks: { 
                         color: labelColor, 
-                        font: { family: 'Inter' },
+                        font: { family: 'SF Pro Display, Inter, sans-serif', weight: '500' },
                         callback: function(value) { return value + "%" }
                     }
                 }
