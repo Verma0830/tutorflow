@@ -8,38 +8,38 @@
     --font-heading: 'Outfit', sans-serif;
 
     /* Light Theme (Default) Colors */
-    --bg-app: #f8fafc;
-    --bg-sidebar: #ffffff;
-    --bg-card: #ffffff;
-    --bg-input: #f1f5f9;
+    --bg-app: #f1f5f9;
+    --bg-sidebar: rgba(255, 255, 255, 0.45);
+    --bg-card: rgba(255, 255, 255, 0.55);
+    --bg-input: rgba(241, 245, 249, 0.65);
     --text-main: #0f172a;
     --text-muted: #64748b;
     --text-white: #ffffff;
     
-    --border-color: #e2e8f0;
+    --border-color: rgba(255, 255, 255, 0.5);
     
     /* Branding and Accents */
     --primary: #4f46e5;
     --primary-hover: #4338ca;
-    --primary-light: #e0e7ff;
+    --primary-light: rgba(79, 70, 229, 0.15);
     
     --success: #10b981;
-    --success-light: #d1fae5;
+    --success-light: rgba(16, 185, 129, 0.15);
     --success-dark: #065f46;
     
     --danger: #ef4444;
-    --danger-light: #fee2e2;
+    --danger-light: rgba(239, 68, 68, 0.15);
     --danger-dark: #991b1b;
     
     --warning: #f59e0b;
-    --warning-light: #fef3c7;
+    --warning-light: rgba(245, 158, 11, 0.15);
     --warning-dark: #92400e;
     
     --info: #3b82f6;
-    --info-light: #dbeafe;
+    --info-light: rgba(59, 130, 246, 0.15);
     
     --purple: #8b5cf6;
-    --purple-light: #f3e8ff;
+    --purple-light: rgba(139, 92, 246, 0.15);
     
     /* System Tokens */
     --radius-sm: 8px;
@@ -47,43 +47,43 @@
     --radius-lg: 20px;
     --radius-full: 9999px;
     
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-    --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 16px -6px rgba(15, 23, 42, 0.05);
+    --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --shadow-lg: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
     
     --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Dark Theme overrides */
 body.dark-theme {
-    --bg-app: #0b0f19;
-    --bg-sidebar: #111827;
-    --bg-card: #1f2937;
-    --bg-input: #374151;
+    --bg-app: #080c14;
+    --bg-sidebar: rgba(15, 23, 42, 0.65);
+    --bg-card: rgba(30, 41, 59, 0.5);
+    --bg-input: rgba(51, 65, 85, 0.4);
     --text-main: #f9fafb;
     --text-muted: #9ca3af;
     
-    --border-color: #374151;
+    --border-color: rgba(255, 255, 255, 0.08);
     
     --primary: #6366f1;
     --primary-hover: #4f46e5;
-    --primary-light: #312e81;
+    --primary-light: rgba(99, 102, 241, 0.2);
     
-    --success-light: #064e3b;
+    --success-light: rgba(16, 185, 129, 0.2);
     --success-dark: #a7f3d0;
     
-    --danger-light: #7f1d1d;
+    --danger-light: rgba(239, 68, 68, 0.2);
     --danger-dark: #fca5a5;
     
-    --warning-light: #78350f;
+    --warning-light: rgba(245, 158, 11, 0.2);
     --warning-dark: #fde68a;
     
-    --info-light: #1e3a8a;
-    --purple-light: #581c87;
+    --info-light: rgba(59, 130, 246, 0.2);
+    --purple-light: rgba(139, 92, 246, 0.2);
     
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --shadow-lg: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* Base Styles */
@@ -1491,3 +1491,134 @@ body {
         gap: 12px;
     }
 }
+
+/* ==========================================
+   Glassmorphism Theme Styles
+   ========================================== */
+body {
+    position: relative;
+    z-index: 1;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: -10%;
+    right: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, rgba(139, 92, 246, 0.08) 40%, rgba(255, 255, 255, 0) 70%);
+    filter: blur(120px);
+    z-index: -2;
+    pointer-events: none;
+    animation: float-blob-1 25s infinite alternate ease-in-out;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    bottom: -10%;
+    left: -10%;
+    width: 70vw;
+    height: 70vw;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.07) 0%, rgba(59, 130, 246, 0.08) 40%, rgba(255, 255, 255, 0) 70%);
+    filter: blur(140px);
+    z-index: -2;
+    pointer-events: none;
+    animation: float-blob-2 30s infinite alternate ease-in-out;
+}
+
+body.dark-theme::before {
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(0, 0, 0, 0) 80%);
+}
+
+body.dark-theme::after {
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(0, 0, 0, 0) 80%);
+}
+
+@keyframes float-blob-1 {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-10%, 15%) scale(1.1); }
+}
+
+@keyframes float-blob-2 {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(15%, -10%) scale(1.2); }
+}
+
+/* Apply Glassmorphism Effects to Core Components */
+.sidebar, 
+.top-bar, 
+.dashboard-card, 
+.filters-bar, 
+.attendance-list-container, 
+.fees-list-container, 
+.sync-card, 
+.roster-list-container, 
+.modal-card, 
+.toast,
+.date-picker-wrapper,
+.month-selector-wrapper {
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+}
+
+/* Enhance glass buttons and inputs */
+.pill-btn,
+.status-btn,
+.fee-action-btn,
+.form-select,
+.header-search input {
+    background-color: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: var(--transition);
+}
+
+body.dark-theme .pill-btn,
+body.dark-theme .status-btn,
+body.dark-theme .fee-action-btn,
+body.dark-theme .form-select,
+body.dark-theme .header-search input {
+    background-color: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Glass hover items */
+.pill-btn:hover,
+.status-btn:hover,
+.fee-action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+body.dark-theme .pill-btn:hover,
+body.dark-theme .status-btn:hover,
+body.dark-theme .fee-action-btn:hover {
+    background-color: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Active state for glass pills */
+.pill-btn.active {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--text-white) !important;
+}
+
+/* Glassmorphism Flatpickr Calendar */
+.flatpickr-calendar {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+body.dark-theme .flatpickr-calendar {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
