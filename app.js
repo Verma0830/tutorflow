@@ -778,21 +778,23 @@ function populateClassFilters() {
     const attFilterContainer = elements.classFiltersAttendance;
     const selectedAttClass = state.activeClassFilterAttendance;
     
-    let attHTML = `<button class="pill-btn ${selectedAttClass === 'all' ? 'active' : ''}" data-class="all">All Grades</button>`;
-    classes.forEach(c => {
-        attHTML += `<button class="pill-btn ${selectedAttClass === c ? 'active' : ''}" data-class="${c}">Class ${c}</button>`;
-    });
-    attFilterContainer.innerHTML = attHTML;
-    
-    // Add event listeners to attendance class pills
-    attFilterContainer.querySelectorAll(".pill-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            state.activeClassFilterAttendance = btn.getAttribute("data-class");
-            attFilterContainer.querySelectorAll(".pill-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            renderAttendanceList();
+    if (attFilterContainer) {
+        let attHTML = `<button class="pill-btn ${selectedAttClass === 'all' ? 'active' : ''}" data-class="all">All Grades</button>`;
+        classes.forEach(c => {
+            attHTML += `<button class="pill-btn ${selectedAttClass === c ? 'active' : ''}" data-class="${c}">Class ${c}</button>`;
         });
-    });
+        attFilterContainer.innerHTML = attHTML;
+        
+        // Add event listeners to attendance class pills
+        attFilterContainer.querySelectorAll(".pill-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                state.activeClassFilterAttendance = btn.getAttribute("data-class");
+                attFilterContainer.querySelectorAll(".pill-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                renderAttendanceList();
+            });
+        });
+    }
 
     // Render pill filters in Fee View
     const feeFilterContainer = elements.classFiltersFees;
