@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tutorflow-cache-v10';
+const CACHE_NAME = 'tutorflow-cache-v11';
 const ASSETS = [
   './',
   './index.html',

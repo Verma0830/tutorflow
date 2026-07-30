@@ -1401,22 +1401,38 @@ function renderReportsSheet() {
         return true;
     });
     
-    // Generate Table Headers
+    // Generate Table Headers (Two rows to replicate the Excel template)
     let headerHTML = `
         <thead>
+            <!-- Row 1: Day numbers -->
             <tr>
-                <th style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 10; min-width: 150px; text-align: left; padding: 12px 16px;">Student Name</th>
-                <th style="min-width: 80px; text-align: center;">Class</th>
+                <th style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 10; min-width: 150px; border-right: 1px solid var(--border-color); border-bottom: none; height: 24px; padding: 0;"></th>
+                <th style="min-width: 80px; border-right: 1px solid var(--border-color); border-bottom: none; height: 24px; padding: 0;"></th>
     `;
     
     for (let day = 1; day <= daysInMonth; day++) {
-        headerHTML += `<th style="width: 32px; text-align: center; font-size: 11px; padding: 6px 2px;">${day}</th>`;
+        headerHTML += `<th style="width: 32px; text-align: center; font-size: 11px; padding: 4px 2px; border-right: 1px solid var(--border-color); border-bottom: none; font-weight: 700; color: var(--text-muted);">${day}</th>`;
     }
     
     headerHTML += `
-                <th style="width: 50px; text-align: center; color: var(--success); font-weight: 700; font-size: 12px; padding: 6px 2px;">P</th>
-                <th style="width: 50px; text-align: center; color: var(--danger); font-weight: 700; font-size: 12px; padding: 6px 2px;">A</th>
-                <th style="width: 60px; text-align: center; color: var(--text-muted); font-size: 12px; padding: 6px 2px;">%</th>
+                <th style="width: 50px; border-right: 1px solid var(--border-color); border-bottom: none; padding: 0;"></th>
+                <th style="width: 50px; border-right: 1px solid var(--border-color); border-bottom: none; padding: 0;"></th>
+                <th style="width: 60px; border-bottom: none; padding: 0;"></th>
+            </tr>
+            <!-- Row 2: Column Titles -->
+            <tr>
+                <th style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 10; min-width: 150px; text-align: left; padding: 8px 16px; border-right: 1px solid var(--border-color); border-bottom: 2px solid var(--border-color); font-weight: 800; color: var(--text-main); font-size: 13px;">name</th>
+                <th style="min-width: 80px; text-align: center; border-right: 1px solid var(--border-color); border-bottom: 2px solid var(--border-color); font-weight: 800; color: var(--text-main); font-size: 13px;">class</th>
+    `;
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        headerHTML += `<th style="width: 32px; border-right: 1px solid var(--border-color); border-bottom: 2px solid var(--border-color); padding: 0;"></th>`;
+    }
+    
+    headerHTML += `
+                <th style="width: 50px; text-align: center; color: var(--success); font-weight: 800; font-size: 12px; padding: 8px 2px; border-right: 1px solid var(--border-color); border-bottom: 2px solid var(--border-color);">P</th>
+                <th style="width: 50px; text-align: center; color: var(--danger); font-weight: 800; font-size: 12px; padding: 8px 2px; border-right: 1px solid var(--border-color); border-bottom: 2px solid var(--border-color);">A</th>
+                <th style="width: 60px; text-align: center; color: var(--text-muted); font-weight: 800; font-size: 12px; padding: 8px 2px; border-bottom: 2px solid var(--border-color);">%</th>
             </tr>
         </thead>
     `;
@@ -1435,8 +1451,8 @@ function renderReportsSheet() {
         filteredStudents.forEach(student => {
             rowsHTML += `
                 <tr class="student-row">
-                    <td style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 5; text-align: left; padding: 12px 16px; font-weight: 600; border-right: 1px solid var(--border-color); box-shadow: 4px 0 8px -4px rgba(0,0,0,0.15);">${student.name}</td>
-                    <td style="text-align: center; font-weight: 500;"><span class="class-badge" style="font-size: 11px; padding: 2px 6px;">Class ${student.class}</span></td>
+                    <td style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 5; text-align: left; padding: 12px 16px; font-weight: 600; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); box-shadow: 4px 0 8px -4px rgba(0,0,0,0.15); text-transform: capitalize;">${student.name}</td>
+                    <td style="text-align: center; font-weight: 500; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 13px;">Class ${student.class}</td>
             `;
             
             let presentCount = 0;
@@ -1463,16 +1479,16 @@ function renderReportsSheet() {
                     badgeHTML = `<span style="color: rgba(255,255,255,0.15); font-weight: 500;">·</span>`;
                 }
                 
-                rowsHTML += `<td style="text-align: center; padding: 6px 1px; vertical-align: middle;">${badgeHTML}</td>`;
+                rowsHTML += `<td style="text-align: center; padding: 6px 1px; vertical-align: middle; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">${badgeHTML}</td>`;
             }
             
             const activeDays = presentCount + absentCount;
             const attendancePct = activeDays > 0 ? Math.round((presentCount / activeDays) * 100) : 0;
             
             rowsHTML += `
-                    <td style="text-align: center; font-weight: 700; color: var(--success);">${presentCount}</td>
-                    <td style="text-align: center; font-weight: 700; color: var(--danger);">${absentCount}</td>
-                    <td style="text-align: center; font-weight: 700; color: ${attendancePct >= 80 ? 'var(--success)' : attendancePct >= 50 ? 'var(--warning)' : 'var(--danger)'};">${attendancePct}%</td>
+                    <td style="text-align: center; font-weight: 700; color: var(--success); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">${presentCount}</td>
+                    <td style="text-align: center; font-weight: 700; color: var(--danger); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">${absentCount}</td>
+                    <td style="text-align: center; font-weight: 700; color: ${attendancePct >= 80 ? 'var(--success)' : attendancePct >= 50 ? 'var(--warning)' : 'var(--danger)'}; border-bottom: 1px solid var(--border-color);">${attendancePct}%</td>
                 </tr>
             `;
         });
