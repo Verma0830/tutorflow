@@ -1401,13 +1401,12 @@ function renderReportsSheet() {
         return true;
     });
     
-    // Generate Table Headers (Two rows to replicate the Excel template)
+    // Generate Table Headers (Two rows to replicate the Excel template, class column removed)
     let headerHTML = `
         <thead>
             <!-- Row 1: Day numbers -->
             <tr>
                 <th style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 10; min-width: 150px; border-right: 1px solid var(--border-color); border-bottom: none; height: 24px; padding: 0;"></th>
-                <th style="min-width: 80px; border-right: 1px solid var(--border-color); border-bottom: none; height: 24px; padding: 0;"></th>
     `;
     
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1422,7 +1421,6 @@ function renderReportsSheet() {
             <!-- Row 2: Column Titles -->
             <tr>
                 <th style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 10; min-width: 150px; text-align: left; padding: 8px 16px; border-right: 1px solid var(--border-color); border-bottom: 2px solid var(--border-color); font-weight: 800; color: var(--text-main); font-size: 13px;">name</th>
-                <th style="min-width: 80px; text-align: center; border-right: 1px solid var(--border-color); border-bottom: 2px solid var(--border-color); font-weight: 800; color: var(--text-main); font-size: 13px;">class</th>
     `;
     
     for (let day = 1; day <= daysInMonth; day++) {
@@ -1442,7 +1440,7 @@ function renderReportsSheet() {
     if (filteredStudents.length === 0) {
         rowsHTML += `
             <tr>
-                <td colspan="${daysInMonth + 5}" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                <td colspan="${daysInMonth + 4}" style="text-align: center; padding: 32px; color: var(--text-muted);">
                     No students found matching current filters.
                 </td>
             </tr>
@@ -1452,7 +1450,6 @@ function renderReportsSheet() {
             rowsHTML += `
                 <tr class="report-student-row">
                     <td style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 5; text-align: left; padding: 12px 16px; font-weight: 600; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); box-shadow: 4px 0 8px -4px rgba(0,0,0,0.15); text-transform: capitalize;">${student.name}</td>
-                    <td style="text-align: center; font-weight: 500; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 13px;">Class ${student.class}</td>
             `;
             
             let presentCount = 0;
