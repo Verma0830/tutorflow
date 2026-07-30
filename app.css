@@ -1759,6 +1759,15 @@ input:focus, select:focus, textarea:focus {
     text-transform: capitalize;
 }
 
+/* Sticky left column for student names in Reports */
+.sticky-col {
+    position: sticky !important;
+    left: 0 !important;
+    background-color: #121214 !important; /* Solid dark color matching the theme background */
+    z-index: 100 !important; /* Ensure it stays on top of day cells */
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.45) !important; /* Soft shadow separator */
+}
+
 
 
 
