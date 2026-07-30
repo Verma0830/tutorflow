@@ -1450,7 +1450,7 @@ function renderReportsSheet() {
     } else {
         filteredStudents.forEach(student => {
             rowsHTML += `
-                <tr class="student-row">
+                <tr class="report-student-row">
                     <td style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 5; text-align: left; padding: 12px 16px; font-weight: 600; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); box-shadow: 4px 0 8px -4px rgba(0,0,0,0.15); text-transform: capitalize;">${student.name}</td>
                     <td style="text-align: center; font-weight: 500; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 13px;">Class ${student.class}</td>
             `;
