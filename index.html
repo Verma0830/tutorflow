@@ -51,6 +51,10 @@
                     <span class="material-symbols-rounded">payments</span>
                     Fee Tracker
                 </button>
+                <button class="nav-btn" data-tab="reports">
+                    <span class="material-symbols-rounded">calendar_view_month</span>
+                    Monthly Sheet
+                </button>
                 <button class="nav-btn" data-tab="roster">
                     <span class="material-symbols-rounded">group</span>
                     Students
@@ -295,6 +299,57 @@
                         </div>
                         <div id="fees-student-list" class="student-list">
                             <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. MONTHLY ATTENDANCE SHEET VIEW -->
+                <section id="tab-reports" class="tab-content">
+                    <div class="view-header">
+                        <div>
+                            <h1>Monthly Attendance Sheet</h1>
+                            <p class="subtitle">Detailed day-wise student attendance grid for each month</p>
+                        </div>
+                        <div class="view-header-actions" style="display: flex; gap: 12px; align-items: center;">
+                            <!-- Month selector -->
+                            <div class="month-selector-wrapper">
+                                <span class="material-symbols-rounded">calendar_today</span>
+                                <input type="month" id="reports-month-selector">
+                            </div>
+                            <!-- Class Filter -->
+                            <select id="reports-class-filter" class="form-select" style="min-width: 150px;">
+                                <option value="all">All Classes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Legend card -->
+                    <div class="dashboard-card" style="padding: 16px; margin-bottom: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; border-radius: 16px;">
+                        <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);">LEGEND:</span>
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                            <span style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--success); display: inline-block; box-shadow: 0 0 8px rgba(52, 199, 89, 0.4);"></span>
+                            <span>Present (P)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                            <span style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--danger); display: inline-block; box-shadow: 0 0 8px rgba(255, 69, 58, 0.4);"></span>
+                            <span>Absent (A)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                            <span style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--info); display: inline-block; box-shadow: 0 0 8px rgba(100, 210, 255, 0.4);"></span>
+                            <span>Holiday / Off (O)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                            <span style="width: 12px; height: 12px; border-radius: 50%; background-color: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); display: inline-block;"></span>
+                            <span>Unmarked (·)</span>
+                        </div>
+                    </div>
+
+                    <!-- Table Grid Container -->
+                    <div class="roster-list-container" style="border-radius: var(--radius-lg); overflow: hidden;">
+                        <div class="class-list-table-wrapper" style="overflow-x: auto; width: 100%;">
+                            <table class="roster-table" id="reports-table" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
+                                <!-- Table header and rows populated dynamically -->
+                            </table>
                         </div>
                     </div>
                 </section>

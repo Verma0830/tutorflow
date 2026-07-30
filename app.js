@@ -10,10 +10,12 @@ let state = {
     currentTab: "dashboard",
     currentDate: "",   // "YYYY-MM-DD"
     currentMonth: "",  // "YYYY-MM"
+    reportsMonth: "",  // "YYYY-MM"
     activeClassFilterAttendance: "all",
     activeClassFilterFees: "all",
     activeFeeStatusFilter: "all",
     activeRosterClassFilter: "all",
+    activeReportsClassFilter: "all",
     searchQuery: "",
     chartInstance: null,
     fpInstance: null
@@ -52,6 +54,11 @@ const elements = {
     classFiltersFees: document.getElementById("class-filters-fees"),
     feeStatusFilter: document.getElementById("fee-status-filter"),
     feesStudentList: document.getElementById("fees-student-list"),
+    
+    // Reports View
+    reportsMonthSelector: document.getElementById("reports-month-selector"),
+    reportsClassFilter: document.getElementById("reports-class-filter"),
+    reportsTable: document.getElementById("reports-table"),
     
     // Roster & Sync View
     excelUploadInput: document.getElementById("excel-upload-input"),
@@ -114,8 +121,12 @@ function initDates() {
     
     state.currentDate = `${yyyy}-${mm}-${dd}`;
     state.currentMonth = `${yyyy}-${mm}`;
+    state.reportsMonth = `${yyyy}-${mm}`;
     
     elements.feeMonthSelector.value = state.currentMonth;
+    if (elements.reportsMonthSelector) {
+        elements.reportsMonthSelector.value = state.reportsMonth;
+    }
     
     // Initialize Flatpickr (Premium Custom Calendar)
     state.fpInstance = flatpickr("#attendance-date", {
@@ -531,6 +542,35 @@ function setupEventListeners() {
 
     // Automatic online queue flushing
     window.addEventListener("online", flushSyncQueue);
+    
+    // Reports listeners
+    if (elements.reportsMonthSelector) {
+        elements.reportsMonthSelector.addEventListener("change", (e) => {
+            state.reportsMonth = e.target.value;
+            renderReportsSheet();
+        });
+        
+        // Setup wrapper click helper for mobile picker opening
+        const reportsMonthWrapper = document.querySelector("#tab-reports .month-selector-wrapper");
+        if (reportsMonthWrapper) {
+            reportsMonthWrapper.addEventListener("click", (e) => {
+                if (e.target !== elements.reportsMonthSelector) {
+                    try {
+                        elements.reportsMonthSelector.showPicker();
+                    } catch (err) {
+                        console.log("showPicker failed", err);
+                    }
+                }
+            });
+        }
+    }
+    
+    if (elements.reportsClassFilter) {
+        elements.reportsClassFilter.addEventListener("change", (e) => {
+            state.activeReportsClassFilter = e.target.value;
+            renderReportsSheet();
+        });
+    }
 }
 
 // --- Sunday Default holiday Auto-Check ---
@@ -675,6 +715,8 @@ function updateAppView() {
         renderFeesList();
     } else if (state.currentTab === "roster") {
         renderRosterList();
+    } else if (state.currentTab === "reports") {
+        renderReportsSheet();
     }
 }
 
@@ -823,6 +865,16 @@ function populateClassFilters() {
         optHTML += `<option value="${c}" ${selectedRosterClass === c ? 'selected' : ''}>Class ${c}</option>`;
     });
     elements.rosterClassFilter.innerHTML = optHTML;
+
+    // Reports Dropdown
+    if (elements.reportsClassFilter) {
+        const selectedReportsClass = state.activeReportsClassFilter;
+        let reportsOptHTML = `<option value="all" ${selectedReportsClass === 'all' ? 'selected' : ''}>All Classes</option>`;
+        classes.forEach(c => {
+            reportsOptHTML += `<option value="${c}" ${selectedReportsClass === c ? 'selected' : ''}>Class ${c}</option>`;
+        });
+        elements.reportsClassFilter.innerHTML = reportsOptHTML;
+    }
 }
 
 // --- Dashboard View Logic ---
@@ -1324,6 +1376,110 @@ function renderRosterList() {
         
         tbody.appendChild(tr);
     });
+}
+
+// --- Reports/Monthly Sheet Logic ---
+function renderReportsSheet() {
+    if (!elements.reportsTable) return;
+    
+    if (elements.reportsMonthSelector) {
+        elements.reportsMonthSelector.value = state.reportsMonth;
+    }
+    
+    // Parse selected month
+    const parts = state.reportsMonth.split('-');
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]);
+    
+    // Get number of days in this month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    // Filter students by active reports class filter and global search queries
+    const filteredStudents = state.students.filter(student => {
+        if (state.activeReportsClassFilter !== "all" && student.class !== state.activeReportsClassFilter) return false;
+        if (state.searchQuery && !student.name.toLowerCase().includes(state.searchQuery)) return false;
+        return true;
+    });
+    
+    // Generate Table Headers
+    let headerHTML = `
+        <thead>
+            <tr>
+                <th style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 10; min-width: 150px; text-align: left; padding: 12px 16px;">Student Name</th>
+                <th style="min-width: 80px; text-align: center;">Class</th>
+    `;
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        headerHTML += `<th style="width: 32px; text-align: center; font-size: 11px; padding: 6px 2px;">${day}</th>`;
+    }
+    
+    headerHTML += `
+                <th style="width: 50px; text-align: center; color: var(--success); font-weight: 700; font-size: 12px; padding: 6px 2px;">P</th>
+                <th style="width: 50px; text-align: center; color: var(--danger); font-weight: 700; font-size: 12px; padding: 6px 2px;">A</th>
+                <th style="width: 60px; text-align: center; color: var(--text-muted); font-size: 12px; padding: 6px 2px;">%</th>
+            </tr>
+        </thead>
+    `;
+    
+    // Generate Table Rows
+    let rowsHTML = '<tbody>';
+    if (filteredStudents.length === 0) {
+        rowsHTML += `
+            <tr>
+                <td colspan="${daysInMonth + 5}" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                    No students found matching current filters.
+                </td>
+            </tr>
+        `;
+    } else {
+        filteredStudents.forEach(student => {
+            rowsHTML += `
+                <tr class="student-row">
+                    <td style="position: sticky; left: 0; background-color: var(--bg-card); z-index: 5; text-align: left; padding: 12px 16px; font-weight: 600; border-right: 1px solid var(--border-color); box-shadow: 4px 0 8px -4px rgba(0,0,0,0.15);">${student.name}</td>
+                    <td style="text-align: center; font-weight: 500;"><span class="class-badge" style="font-size: 11px; padding: 2px 6px;">Class ${student.class}</span></td>
+            `;
+            
+            let presentCount = 0;
+            let absentCount = 0;
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const monthStr = String(month).padStart(2, '0');
+                const dateStr = `${year}-${monthStr}-${dayStr}`;
+                
+                const dateRecords = state.attendance[dateStr] || {};
+                const status = dateRecords[student.id];
+                
+                let badgeHTML = '';
+                if (status === "present") {
+                    presentCount++;
+                    badgeHTML = `<span style="display: inline-block; width: 18px; height: 18px; border-radius: 50%; background-color: rgba(52, 199, 89, 0.15); color: #34C759; text-align: center; line-height: 18px; font-size: 10px; font-weight: 800; border: 1px solid rgba(52, 199, 89, 0.35); box-shadow: 0 0 6px rgba(52, 199, 89, 0.2);">P</span>`;
+                } else if (status === "absent") {
+                    absentCount++;
+                    badgeHTML = `<span style="display: inline-block; width: 18px; height: 18px; border-radius: 50%; background-color: rgba(255, 69, 58, 0.15); color: #FF453A; text-align: center; line-height: 18px; font-size: 10px; font-weight: 800; border: 1px solid rgba(255, 69, 58, 0.35); box-shadow: 0 0 6px rgba(255, 69, 58, 0.2);">A</span>`;
+                } else if (status === "off") {
+                    badgeHTML = `<span style="display: inline-block; width: 18px; height: 18px; border-radius: 50%; background-color: rgba(100, 210, 255, 0.15); color: #64D2FF; text-align: center; line-height: 18px; font-size: 10px; font-weight: 800; border: 1px solid rgba(100, 210, 255, 0.35); box-shadow: 0 0 6px rgba(100, 210, 255, 0.2);">O</span>`;
+                } else {
+                    badgeHTML = `<span style="color: rgba(255,255,255,0.15); font-weight: 500;">·</span>`;
+                }
+                
+                rowsHTML += `<td style="text-align: center; padding: 6px 1px; vertical-align: middle;">${badgeHTML}</td>`;
+            }
+            
+            const activeDays = presentCount + absentCount;
+            const attendancePct = activeDays > 0 ? Math.round((presentCount / activeDays) * 100) : 0;
+            
+            rowsHTML += `
+                    <td style="text-align: center; font-weight: 700; color: var(--success);">${presentCount}</td>
+                    <td style="text-align: center; font-weight: 700; color: var(--danger);">${absentCount}</td>
+                    <td style="text-align: center; font-weight: 700; color: ${attendancePct >= 80 ? 'var(--success)' : attendancePct >= 50 ? 'var(--warning)' : 'var(--danger)'};">${attendancePct}%</td>
+                </tr>
+            `;
+        });
+    }
+    
+    rowsHTML += '</tbody>';
+    elements.reportsTable.innerHTML = headerHTML + rowsHTML;
 }
 
 // --- Student Modal Logic ---
